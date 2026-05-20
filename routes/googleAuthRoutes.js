@@ -28,12 +28,16 @@ router.get(
     console.log('✅ Google auth success, user:', req.user?.user?.email);
     const { user, token } = req.user;
 
-    const redirectUrl = new URL(`${CLIENT_URL}/auth/google/success`);
-    redirectUrl.searchParams.set('token', token);
-    redirectUrl.searchParams.set('userId', user._id.toString());
+    // Set HTTP-only cookie with token
+    res.cookie('google_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
-    console.log('🔄 Redirecting to:', redirectUrl.toString());
-    res.redirect(redirectUrl.toString());
+    // Redirect without token in URL
+    res.redirect(`${CLIENT_URL}/auth/google/success`);
   }
 );
 

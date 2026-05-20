@@ -1,12 +1,23 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const protect = async (req, res, next) => {
-  let token;
-
+const getTokenFromRequest = (req) => {
+  // Check Authorization header first
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    return req.headers.authorization.split(' ')[1];
+  }
+  // Fallback to cookie
+  if (req.cookies && req.cookies.google_token) {
+    return req.cookies.google_token;
+  }
+  return null;
+};
+
+const protect = async (req, res, next) => {
+  const token = getTokenFromRequest(req);
+
+  if (token) {
     try {
-      token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select('-password');
 
@@ -31,11 +42,10 @@ const protect = async (req, res, next) => {
 };
 
 const optionalAuth = async (req, res, next) => {
-  let token;
+  const token = getTokenFromRequest(req);
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (token) {
     try {
-      token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select('-password');
       next();

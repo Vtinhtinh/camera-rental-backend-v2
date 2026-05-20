@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const passport = require('passport');
 const connectDB = require('./config/db');
@@ -68,6 +69,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 app.use(passport.initialize());
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
