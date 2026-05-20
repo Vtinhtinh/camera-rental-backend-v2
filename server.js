@@ -33,18 +33,40 @@ if (telegramBot) {
   startOverdueChecker(1);
 }
 
+// CORS Configuration - Allow Vercel frontend with credentials
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://camera-rental-frontend-v2.vercel.app',
+  process.env.CLIENT_URL
+].filter(Boolean);
+
+// Remove duplicates
+const uniqueOrigins = [...new Set(allowedOrigins)];
+
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    process.env.CLIENT_URL
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (uniqueOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['set-cookie']
 };
 
 app.use(cors(corsOptions));
+
+// Preflight handler for all routes
+app.options('*', cors(corsOptions));
+
 app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
